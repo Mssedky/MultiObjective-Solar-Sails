@@ -17,7 +17,7 @@ const double G = 6.67430e-11;  // Gravitational constant (m^3/kg/s^2)
 const double M_sun = 1.989e30;  // Mass of the Sun (kg)
 const double PI = 3.14159265359;
 
-// Vector3D class for 3D operations
+
 class Vector3D {
 public:
     double x, y, z;
@@ -95,7 +95,7 @@ double calcTrueAnomaly(double semi_major_axis, double eccentricity,
     return true_anomaly;
 }
 
-// OrbitingObject class
+
 class OrbitingObject {
 public:
     double a, e, i, omega, Omega, nuMean, mass;
@@ -145,7 +145,7 @@ void calcCelestialTraj(OrbitingObject& body, double dT, double T) {
 }
 
 void printDesignVariables(const std::vector<double>& var, int NumSeg) {
-    std::cout << std::fixed << std::setprecision(8);  // Set precision to 8 decimal places
+    std::cout << std::fixed << std::setprecision(8);  
     
     std::cout << "The design variables are:" << std::endl;
     std::cout << "[";
@@ -153,14 +153,12 @@ void printDesignVariables(const std::vector<double>& var, int NumSeg) {
     for (size_t i = 0; i < var.size(); ++i) {
         std::cout << var[i];
         
-        // Add comma and space after each element except the last
         if (i < var.size() - 1) {
             std::cout << ", ";
         }
-        
-        // Add newline after every 6 values (except for the last line)
+
         if ((i + 1) % 6 == 0 && i < var.size() - 1) {
-            std::cout << std::endl << " ";  // Newline + space for alignment
+            std::cout << std::endl << " "; 
         }
     }
     
@@ -208,7 +206,7 @@ struct AngleSegment {
         : times(t), values(v), poly(p) {}
 };
 
-// Lagrange interpolation function
+
 std::function<double(double)> lagrange_interpolation(const std::vector<double>& x_points, 
                                                    const std::vector<double>& y_points) {
     return [x_points, y_points](double x) -> double {
@@ -231,7 +229,7 @@ std::function<double(double)> lagrange_interpolation(const std::vector<double>& 
     };
 }
 
-// Function to create angle polynomials for each segment
+
 std::pair<std::vector<AngleSegment>, std::vector<AngleSegment>> 
 create_angle_functions(const std::vector<double>& time_segments,
                       const std::vector<double>& clock_angles,
@@ -279,12 +277,12 @@ create_angle_functions(const std::vector<double>& time_segments,
     return std::make_pair(segments_clocks, segments_cones);
 }
 
-// Function to find value at a specific time
+
 double find_value_at_time(const std::vector<AngleSegment>& angles,
                          const std::vector<double>& time_segments,
                          double t_days) {
     
-    // Find the position where t_days would be inserted to keep the array sorted
+    
     auto it = std::upper_bound(time_segments.begin(), time_segments.end(), t_days);
     int ind = std::distance(time_segments.begin(), it);
     
@@ -304,7 +302,6 @@ double find_value_at_time(const std::vector<AngleSegment>& angles,
 
 
 Vector3D initialPos(double xE, double yE, double rInit) {
-    // Initial guess: exactly as in Python [xE + rInit, yE]
     double x[2] = {xE + rInit, yE};
     
     // Parameters
@@ -314,7 +311,7 @@ Vector3D initialPos(double xE, double yE, double rInit) {
     
     // Working arrays
     double fvec[2];
-    double fjac[4];  // 2x2 Jacobian stored row-wise
+    double fjac[4]; 
     
     // Machine precision
     double eps = std::sqrt(2.22e-16);
@@ -323,16 +320,14 @@ Vector3D initialPos(double xE, double yE, double rInit) {
     auto fcn = [&](const double* x_val, double* f_val) {
         double dx = x_val[0] - xE;
         double dy = x_val[1] - yE;  
-        f_val[0] = dx * xE + dy * yE;                    // Dot product = 0
-        f_val[1] = dx * dx + dy * dy - rInit * rInit;    // Distance² = rInit²
+        f_val[0] = dx * xE + dy * yE;                    
+        f_val[1] = dx * dx + dy * dy - rInit * rInit;    
     };
     
-    // Main iteration loop
     int nfev = 0;
     bool converged = false;
     
     for (int iter = 0; iter < maxfev && !converged; iter++) {
-        // Evaluate function
         fcn(x, fvec);
         nfev++;
         
@@ -343,7 +338,7 @@ Vector3D initialPos(double xE, double yE, double rInit) {
             break;
         }
         
-        // Compute Jacobian analytically (more accurate than finite differences)
+        // Compute Jacobian analytically
         double dx = x[0] - xE;
         double dy = x[1] - yE;
         
@@ -376,7 +371,7 @@ Vector3D initialPos(double xE, double yE, double rInit) {
             p[0] = (-fvec[0] * fjac[3] + fvec[1] * fjac[1]) / det;
             p[1] = ( fvec[0] * fjac[2] - fvec[1] * fjac[0]) / det;
             
-            // Apply step (no trust region needed for this well-behaved problem)
+            // Apply step 
             x[0] += p[0];
             x[1] += p[1];
             
@@ -477,8 +472,6 @@ public:
         // Create angle functions
         auto [segmentsClocks, segmentsCones] = create_angle_functions(time_segments, clock_angle_var, cone_angle_var, degree);
         
-        
-        // Use find_body function to locate Earth and NEO
         auto Earth = find_body(bodies, "Earth");
         auto NEO = find_body(bodies, "Bennu");
         
@@ -705,16 +698,6 @@ public:
             
         double returnCost = endCond == 1 ? 0 : finalDistEarth;
         double sunCost = sunClose > 0.25 ? 0 : Penalty;
-        
-        // Debug prints
-        // if (printStatements) {
-        //     std::cout << "minDist: " << minDist << std::endl;
-        //     std::cout << "minDist*Penalty: " << minDist*Penalty << std::endl;
-        //     std::cout << "min_distance_index: " << min_distance_index << std::endl;
-        //     std::cout << "hoverTime: " << hoverTime << std::endl;
-        //     std::cout << "hoverTime2: " << hoverTime2 << std::endl;
-        //     std::cout << "start_index: " << start_index << ", end_index: " << end_index << std::endl;
-        // }
 
         // Energy cost calculation
         double total_energy_to_NEO = 0;
@@ -748,13 +731,10 @@ public:
                      w[5] * NEOapproachVelCost;
         
         if (printStatements) {
-            // std::cout << "Minimum distance to NEO: " << minDist * AU / 1000 << " km" << std::endl;
             std::cout << "Shortest time to NEO: " << (ToF.empty() ? 0 : ToF[min_distance_index]) << " days" << std::endl;
             std::cout << "Total flight time: " << (simTime.empty() ? 0 : simTime.back()) << " days" << std::endl;
             std::cout << "Reached NEO: " << (reachedNEO == 1 ? "Yes" : "No") << std::endl;
             std::cout << "Returned to Earth: " << (endCond == 1 ? "Yes" : "No") << std::endl;
-            // std::cout << "Final distance to Earth: " << finalDistEarth * AU / 1000 << " km" << std::endl;
-            // std::cout << "Closest distance to Sun: " << sunClose << " AU" << std::endl;
             std::cout << "Cost contribution 1 (Total energy): " << w[0] * energyCost << std::endl;
             std::cout << "Cost contribution 2 (Hover Time): " << w[1] * hoverCost << std::endl;
             std::cout << "Cost contribution 3 (Hover Time 2): " << w[2] * hoverCost2 << std::endl;
@@ -769,7 +749,6 @@ public:
 };
 
 
-// Create a wrapper function that matches the Python lightSailCost function
 double lightSailCost(const std::vector<double>& var, double desHoverTime, bool constant_angles, 
                     double T, const std::vector<double>& w, double TOLNEO, double TOLEarth, int NumSeg,
                     double dT, const std::vector<std::shared_ptr<OrbitingObject>>& bodies) {
@@ -868,7 +847,7 @@ public:
     GeneticAlgorithm(int pop_size, int parents, int children, int max_gen, 
                     double tol, const std::vector<double>& lower_bounds, 
                     const std::vector<double>& upper_bounds, 
-                    unsigned int seed = 0)  // Add seed parameter with default value
+                    unsigned int seed = 0) 
         : population_size(pop_size), num_parents(parents), num_children(children),
           max_generations(max_gen), tolerance(tol), lb(lower_bounds), ub(upper_bounds) {
         
