@@ -130,9 +130,6 @@ if __name__ == "__main__":
     # Get the corresponding time step
     min_distance_time = ToF[min_distance_index]
 
-
-
-    ###############################################################################################
     #Plots
     if plots==1:
         vis.make_plots(ToF, alphaG, gammaG, distances)
