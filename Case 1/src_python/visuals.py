@@ -6,22 +6,17 @@ import os
 def make_plots(ToF, alphaG, gammaG, distances):
     # Plot alphaG vs ToF
     plt.figure(figsize=(10, 6))
-    # plt.plot(ToF, np.mod(alphaG, 6.283))
     plt.plot(ToF, alphaG)
-    # plt.plot(ToF, np.mod(alphaG, 6.283))
     plt.plot(ToF, alphaG)
     plt.xlabel('Time of Flight (days)')
     plt.ylabel('Cone Angle (rad)')
     plt.title('Cone Angle Variation Over Time')
     plt.grid(True)
     plt.show()
-    # print("The alphas are: ", alphaG)
-    # print("The gammas are: ", gammaG)
+
     # Plot gammaG vs ToF
     plt.figure(figsize=(10, 6))
-    # plt.plot(ToF, np.mod(gammaG, 6.283))
     plt.plot(ToF, gammaG)
-    # plt.plot(ToF, np.mod(gammaG, 6.283))
     plt.plot(ToF, gammaG)
     plt.xlabel('Time of Flight (days)')
     plt.ylabel('Clock Angle (rad)')
@@ -66,7 +61,7 @@ def make_animation(sunPos, earthPos, NEOPos, sailPos,simTime, NEOname):
 
     # Update function for animation
     def update(frame):
-        ax.clear()  # Clear the axes
+        ax.clear() 
 
         # Set labels and title
         ax.set_xlabel('X (AU)')
@@ -89,8 +84,6 @@ def make_animation(sunPos, earthPos, NEOPos, sailPos,simTime, NEOname):
         # Plot Sail
         sail_line = ax.plot([sailPos[frame][0]], [sailPos[frame][1]], [sailPos[frame][2]], 'ro', markersize=1, label='Sail')[0]
 
-        # # Update simulation time text
-        # time_text.set_text(f"Simulation Time: {simTime[frame]:.2f} days")
         # Add text for simulation time
         time_text = ax.text2D(0.05, 0.95, "", transform=ax.transAxes)
         time_text.set_text(f"Simulation Time: {simTime[frame]:.2f} days")

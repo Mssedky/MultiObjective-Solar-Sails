@@ -10,6 +10,7 @@
 #include <limits>
 #include <iomanip>
 #include <chrono>
+#include <filesystem>
 
 // Constants
 const double AU = 1.496e11;  // Astronomical Unit (m)
@@ -719,7 +720,7 @@ public:
         }
         
         double energyCost = (approxDist == 1 || reachedNEO == 1) ? 
-                           total_energy_to_earth * 1e13 : 
+                           total_energy_to_earth * 1e12 : 
                            total_energy_to_NEO * Penalty1 * 1e11;
         
         // Calculate total cost
@@ -761,7 +762,14 @@ double lightSailCost(const std::vector<double>& var, double desHoverTime, bool c
 
 // Function to save simulation results (sail trajectory)
 void saveSailTrajectoryToFile(const LightSailSolver& solver, const std::string& filename = "sail_trajectory_cpp.txt") {
-    std::ofstream file(filename);
+    // Create output directory if it doesn't exist
+    std::filesystem::path outputDir = "output";
+    if (!std::filesystem::exists(outputDir)) {
+        std::filesystem::create_directory(outputDir);
+        std::cout << "Created output directory: " << outputDir << std::endl;
+    }
+    std::filesystem::path file_name = outputDir / filename;
+    std::ofstream file(file_name);
     
     if (!file.is_open()) {
         std::cerr << "Error: Could not open file " << filename << " for writing!" << std::endl;
@@ -962,7 +970,7 @@ std::vector<double> bruteForceOptimization(
     double dT, 
     int NumSeg,
     std::vector<std::shared_ptr<OrbitingObject>>& bodies,
-    int max_iter = 700, 
+    int max_iter = 500, 
     int tolerance = 150, 
     double m = 0.2, 
     double momentum = 0.9, 
@@ -1019,61 +1027,18 @@ std::vector<double> bruteForceOptimization(
     return var;
 }
 
-
-// Add this function after the existing functions, before the main function
-void saveTrajectoriesToFile(const std::vector<std::shared_ptr<OrbitingObject>>& bodies, 
-                           double dT, const std::string& filename = "celestial_trajectories.txt") {
-    std::ofstream file(filename);
-    
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << filename << " for writing!" << std::endl;
-        return;
-    }
-    
-    // Set precision for output
-    file << std::fixed << std::setprecision(12);
-    
-    // Write header
-    file << "# Celestial Body Trajectories" << std::endl;
-    file << "# Time step (dT): " << dT << " days" << std::endl;
-    file << "# Units: Positions in AU, Velocities in AU/s" << std::endl;
-    file << "# Format: Time(days) Body_Name Pos_X Pos_Y Pos_Z Vel_X Vel_Y Vel_Z" << std::endl;
-    file << "#" << std::endl;
-    
-    // Find the maximum number of data points
-    size_t max_points = 0;
-    for (const auto& body : bodies) {
-        max_points = std::max(max_points, body->positions.size());
-    }
-    
-    // Write data for each time step
-    for (size_t i = 0; i < max_points; ++i) {
-        double time_days = i * dT;
-        
-        for (const auto& body : bodies) {
-            if (i < body->positions.size()) {
-                Vector3D pos = body->positions[i];
-                Vector3D vel = (i < body->velocities.size()) ? body->velocities[i] : Vector3D(0, 0, 0);
-                
-                file << time_days << " " 
-                     << body->name << " "
-                     << pos.x << " " << pos.y << " " << pos.z << " "
-                     << vel.x << " " << vel.y << " " << vel.z << std::endl;
-            }
-        }
-    }
-    
-    file.close();
-    std::cout << "Trajectories saved to " << filename << std::endl;
-    std::cout << "Total time points: " << max_points << std::endl;
-    std::cout << "Total simulation time: " << (max_points - 1) * dT << " days" << std::endl;
-}
-
-// Alternative function to save each body to separate files
 void saveTrajectoriesToSeparateFiles(const std::vector<std::shared_ptr<OrbitingObject>>& bodies, 
                                     double dT, const std::string& prefix = "trajectory_") {
+    
+    // Create output directory if it doesn't exist
+    std::filesystem::path outputDir = "output";
+    if (!std::filesystem::exists(outputDir)) {
+        std::filesystem::create_directory(outputDir);
+        std::cout << "Created output directory: " << outputDir << std::endl;
+    }
+
     for (const auto& body : bodies) {
-        std::string filename = prefix + body->name + ".txt";
+        std::filesystem::path filename = outputDir / (prefix + body->name + ".txt");
         std::ofstream file(filename);
         
         if (!file.is_open()) {
@@ -1143,17 +1108,16 @@ int main() {
         calcCelestialTraj(*Bennu, dT, T);
         
         std::vector<std::shared_ptr<OrbitingObject>> bodies = {Earth, Bennu};
-        saveTrajectoriesToFile(bodies, dT, "celestial_trajectories.txt");
         saveTrajectoriesToSeparateFiles(bodies, dT, "trajectory_");
 
         // Set up optimization parameters
         int NumSeg = 55;
-        int SegLength = 55;
+        int SegLength = 65;
         std::vector<double> lb, ub;
         
         // Bounds setup
         lb.push_back(1);    // degree_min
-        lb.push_back(150);  // time_min
+        lb.push_back(50);  // time_min
         lb.push_back(30*1000/AU);  // vel_min
         
         ub.push_back(5);    // degree_max
@@ -1179,7 +1143,7 @@ int main() {
         }
         
         // Weights
-        std::vector<double> w = {1, 10, 10, 1, 1, 0};
+        std::vector<double> w = {1, 10, 10, 10, 1, 0};
         double TOLNEO = 1000/AU;
         double TOLEarth = 0.1;
         
@@ -1194,7 +1158,7 @@ int main() {
         int S = 30;   // population size
         int P = 10;   // number of parents
         int K = 10;   // number of children
-        int G = 100;  // max generations
+        int G = 2;  // max generations
         double TOL = 1e-3;  // tolerance
 
         unsigned int fixed_seed = 12345; 
@@ -1208,7 +1172,6 @@ int main() {
         std::cout << "***************************************************************" << std::endl;
         std::cout << "Genetic algorithm optimization complete!" << std::endl;
         std::cout << "***************************************************************" << std::endl;
-        // printDesignVariables(best_var, NumSeg);
 
         // Brute Force Optimization
         best_var = bruteForceOptimization(best_var, desHoverTime, false, T, w, TOLNEO, TOLEarth, dT, NumSeg, bodies);

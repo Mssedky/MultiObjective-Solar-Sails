@@ -37,9 +37,8 @@ if __name__ == "__main__":
     seed = 12345
 
     # Set tolerances for NEO and Earth
-    TOLEarth=0.1
-    # TOLNEO=100000*1000/AU
-    TOLNEO=1000/AU
+    TOLEarth=0.1 # 0.1 AU rendezvous with Earth on the way back
+    TOLNEO=100000*1000/AU # 100,000 km rendezvous distance
 
     #Define genetic algorithm parameters
     S=30
@@ -96,7 +95,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     #Call genetic algorithm to mininmize cost function
-    np.random.seed(11)
+    np.random.seed(seed)
     Lambda,Pi,Orig,meanPi,minPi,meanParents,costs=GeneticAlgorithm(S,P,K,TOL,G,dv,lb,ub,lightSailCost, desHoverTime, constant_angles, T, w, TOLNEO, TOLEarth, max_variation, NumSeg, dT, bodies)
     var = Lambda[0,:]
 
@@ -115,15 +114,16 @@ if __name__ == "__main__":
 
         var, cost = coordinateDescent(var,desHoverTime, constant_angles, T, w, TOLNEO, TOLEarth, dT, bodies, lightSailCost)
 
-        print("Optimized variables after GA:")
-        np.set_printoptions(threshold=1000000000)
-        print(np.array2string(Lambda[0,:], separator=', '))
-        print("The final cost after GA :")
-        print(lightSailCost(Lambda[0,:],desHoverTime, constant_angles, T, w, TOLNEO, TOLEarth, dT, bodies))
+    print("Optimized variables after GA:")
+    np.set_printoptions(threshold=1000000000)
+    print(np.array2string(Lambda[0,:], separator=', '))
+    print("The final cost after GA :")
+    print(lightSailCost(Lambda[0,:],desHoverTime, constant_angles, T, w, TOLNEO, TOLEarth, dT, bodies))
 
-        print("Optimized variables after brute force:")
+    if run_coordinate_descent == 1:
+        print("Optimized variables after coordinate descent:")
         print(np.array2string(var, separator=', '))
-        print("Final cost after brute force:", cost)
+        print("Final cost after coordinate descent:", cost)
         print(lightSailCost(var,desHoverTime, constant_angles, T, w, TOLNEO, TOLEarth, dT, bodies))
 
 

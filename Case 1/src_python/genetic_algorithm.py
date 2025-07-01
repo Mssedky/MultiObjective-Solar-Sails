@@ -1,11 +1,5 @@
 import numpy as np
 
-def store_design_variables(filename, var, numSails, NumSeg, dT, T, SegLength):
-    with open(filename, 'w') as f:
-        f.write(f'Design Variables for numSails = {numSails}, dT = {dT}, T = {T/365} Years, NumSeg = {NumSeg},  and SegLength = {SegLength}:\n')
-        np.set_printoptions(threshold=np.inf) 
-        f.write(np.array2string(var, separator=', '))
-
 def generate_smooth_angles(num_angles, lb, ub, max_variation):
     angles = np.zeros(num_angles)
     angles[0] = np.random.uniform(lb[0], ub[0])
